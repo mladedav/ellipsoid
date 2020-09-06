@@ -1,0 +1,283 @@
+﻿@using global::Ellipsoid
+@using MathNet.Numerics.LinearAlgebra
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@page "/ellipsoid"
+ 
+<div id='container'></div>
+Position of first ellipsoid: <br />
+<input @bind="position.x" />
+<input @bind="position.y" />
+<input @bind="position.z" />
+<br />
+Axes lengths: <br />
+<input @bind="axis1" />
+<input @bind="axis2" />
+<input @bind="axis3" />
+<br />
+<button class="btn btn-primary" @onclick="AddFirstEllipsoidAsync"> First Ellipsoid </button>
+<button class="btn btn-primary" @onclick="StepEllipsoidAsync"> Algorithm Step </button>
+<button class="btn btn-primary" @onclick="ClearEllipsoidsAsync"> Clear Ellipsoids </button>
+<br />
+@* Axes vectors: <br />
+<input @bind="one.x" />
+<input @bind="one.y" />
+<input @bind="one.z" />
+<br />
+<input @bind="two.x" />
+<input @bind="two.y" />
+<input @bind="two.z" />
+<br />
+<input @bind="three.x" />
+<input @bind="three.y" />
+<input @bind="three.z" />
+<br />
+<button class="btn btn-primary" @onclick="AddEllipsoidAsync"> Add Ellipsis </button>
+Ellipsoid matrix: <br />
+<input @bind="matrix[0, 0]" />
+<input @bind="matrix[0, 1]" />
+<input @bind="matrix[0, 2]" />
+<br />
+<input @bind="matrix[1, 0]" />
+<input @bind="matrix[1, 1]" />
+<input @bind="matrix[1, 2]" />
+<br />
+<input @bind="matrix[2, 0]" />
+<input @bind="matrix[2, 1]" />
+<input @bind="matrix[2, 2]" />
+<br />
+<button class="btn btn-primary" @onclick="AddMatrixEllipsoidAsync"> Add Ellipsis </button>
+<br /> *@
+@* 
+@for (int i = 0; i < _equations.Count; i++)
+{
+    <div class="row">
+        <input disabled value="@_equations[i].X" /> * x +
+        <input disabled value="@_equations[i].Y" /> * y +
+        <input disabled value="@_equations[i].Z" /> * z &le;
+        <input disabled value="@_equations[i].A" />
+    </div>
+} *@
+
+<button class="btn btn-primary" @onclick="AddExamplePolyhedronAsync"> Create Example Polyhedron </button>
+
+<div class="row">
+    <input @bind="_x" /> * x +
+    <input @bind="_y" /> * y +
+    <input @bind="_z" /> * z &le;
+    <input @bind="_a" />
+</div>
+
+<button class="btn btn-primary" @onclick="AddEquationAsync"> Add Equation </button>
+<button class="btn btn-primary" @onclick="ClearEquationsAsync"> Clear Equations </button>
+
+<br />
+
+@{
+    var equations = _equations.Concat(_baseBorder).ToList();
+    @equations.Count
+    <br />
+    foreach (var e in equations)
+    {
+        var color = Solver3d.Satisfies(ellipsoid.Center, e) ? "green" : "red";
+        <span style="color:@color;">
+            @($"{e.X} + {e.Y} + {e.Z} ≤ {e.A}")
+        </span>
+        <br />
+    }
+    <br />
+}
+
+@code {
+    private double _x;
+    private double _y;
+    private double _z;
+    private double _a;
+    private IList<Equation3d> _equations = new List<Equation3d>();
+
+    private Equation3d[] _baseBorder = new[]
+    {
+        new Equation3d(1, 0, 0, 1_000_000),
+        new Equation3d(-1, 0, 0, 1_000_000),
+        new Equation3d(0, 1, 0, 1_000_000),
+        new Equation3d(0, -1, 0, 1_000_000),
+        new Equation3d(0, 0, 1, 1_000_000),
+        new Equation3d(0, 0, -1, 1_000_000),
+    };
+
+    private Equation3d[] _examplePolyhedron = new[]
+    {
+        new Equation3d(1, 1, 1, 100),
+        new Equation3d(-1, 1, 1, 100),
+        new Equation3d(-1, -1, 1, 100),
+        new Equation3d(1, -1, 1, 100),
+        new Equation3d(1, -1, -1, 100),
+        new Equation3d(1, 1, -1, 100),
+        new Equation3d(-1, 1, -1, 100),
+        new Equation3d(-1, -1, -1, 100),
+    };
+
+    private Triple position = new Triple();
+    private double axis1 = 0;
+    private double axis2 = 0;
+    private double axis3 = 0;
+    private Matrix<double> matrix = Matrix<double>.Build.Dense(3, 3);
+    private Ellipsoid3d ellipsoid;
+    private Solver3d solver;
+    private Triple one = new Triple();
+    private Triple two = new Triple();
+    private Triple three = new Triple();
+
+    private struct Triple
+    {
+        public double x { get; set; }
+        public double y { get; set; }
+        public double z { get; set; }
+    }
+    
+    private async Task AddExamplePolyhedronAsync()
+    {
+        _equations.Clear();
+        foreach (var equation in _examplePolyhedron)
+        {
+            _equations.Add(equation);
+            solver?.AddEquation(equation);
+        }
+        await PrintPolyhedronAsync();
+    }
+
+    private async Task AddEquationAsync()
+    {
+        var equation = new Equation3d(_x, _y, _z, _a);
+        _equations.Add(equation);
+        solver?.AddEquation(equation);
+        await PrintPolyhedronAsync();
+    }
+
+    private async Task ClearEquationsAsync()
+    {
+        _equations.Clear();
+        await PrintPolyhedronAsync();
+    }
+
+    private async Task PrintPolyhedronAsync()
+    {
+        var points = Solver3d.GetShape(_equations.Concat(_baseBorder).ToList()).ToArray();
+        var triangles = Solver3d.GetTriangles(points);
+        await JSRuntime.InvokeVoidAsync("printPolyhedron", triangles);
+    }
+
+    private async Task StepEllipsoidAsync()
+    {
+        if (solver is null)
+        {
+            return;
+        }
+
+        var newEllipsoid = solver.Iterate(ellipsoid);
+
+        if (newEllipsoid is null)
+        {
+            return;
+        }
+
+        ellipsoid = newEllipsoid.Value;
+        var sqrtMatrix = Ellipsoid3d.SquareRoot(ellipsoid.Matrix);
+        var evd = sqrtMatrix.Evd(MathNet.Numerics.LinearAlgebra.Symmetricity.Symmetric);
+
+        SetProperties(ellipsoid);
+
+        await AddEllipsoidAsync();
+    }
+
+    private async Task AddMatrixEllipsoidAsync()
+    {
+        var center = new Point3d(position.x, position.y, position.z);
+        var ellipsoid = new Ellipsoid3d(center, matrix);
+        SetProperties(ellipsoid);
+
+        await AddEllipsoidAsync();
+    }
+
+    private void SetProperties(Ellipsoid3d ellipsoid)
+    {
+        var sqrtMatrix = Ellipsoid3d.SquareRoot(ellipsoid.Matrix);
+        var evd = sqrtMatrix.Evd(Symmetricity.Symmetric);
+
+        position.x = ellipsoid.Center.X;
+        position.y = ellipsoid.Center.Y;
+        position.z = ellipsoid.Center.Z;
+
+        var ev0 = evd.EigenVectors.Column(0);
+        var q0 = evd.EigenValues[0].Real / ev0.L2Norm();
+        one.x = ev0[0] * q0;
+        one.y = ev0[1] * q0;
+        one.z = ev0[2] * q0;
+
+        var ev1 = evd.EigenVectors.Column(1);
+        var q1 = evd.EigenValues[1].Real / ev1.L2Norm();
+        two.x = ev1[0] * q1;
+        two.y = ev1[1] * q1;
+        two.z = ev1[2] * q1;
+
+        var ev2 = evd.EigenVectors.Column(2);
+        var q2 = evd.EigenValues[2].Real / ev2.L2Norm();
+        three.x = ev2[0] * q2;
+        three.y = ev2[1] * q2;
+        three.z = ev2[2] * q2;
+    }
+
+    private async Task AddFirstEllipsoidAsync()
+    {
+        var matrix = MathNet.Numerics.LinearAlgebra.Matrix<double>.Build.Sparse(3, 3);
+        matrix[0, 0] = axis1 * axis1;
+        matrix[1, 1] = axis2 * axis2;
+        matrix[2, 2] = axis3 * axis3;
+        if (matrix[1, 1] == 0) matrix[1, 1] = matrix[0, 0];
+        if (matrix[2, 2] == 0) matrix[2, 2] = matrix[0, 0];
+        ellipsoid = new Ellipsoid3d(new Point3d(position.x, position.y, position.z), matrix);
+        solver = new Solver3d();
+        foreach (var equation in _equations.Concat(_baseBorder))
+        {
+            solver.AddEquation(equation);
+        }
+
+        one.x = axis1;
+        one.y = 0;
+        one.z = 0;
+        two.x = 0;
+        two.y = axis2;
+        two.z = 0;
+        three.x = 0;
+        three.y = 0;
+        three.z = axis3;
+        await AddEllipsoidAsync();
+    }
+
+    private async Task AddEllipsoidAsync()
+    {
+        await JSRuntime.InvokeVoidAsync("addEllipsoid", position, one, two, three);
+    }
+
+    private async Task ClearEllipsoidsAsync()
+    {
+        await JSRuntime.InvokeVoidAsync("clearEllipsoids");
+    }
+
+    private async Task setP5()
+    {
+        await JSRuntime.InvokeVoidAsync("setp5");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await setP5();
+            position.x = 1000;
+            axis1 = 5000;
+            axis2 = 5000;
+            axis3 = 5000;
+        }
+    }
+}
