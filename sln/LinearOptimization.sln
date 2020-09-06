@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frontend", "Frontend\Fronte
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ellipsoid", "Ellipsoid\Ellipsoid.csproj", "{62183A33-85EE-42BB-805A-066E10D9F7A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EllipsoidTest", "EllipsoidTest\EllipsoidTest.csproj", "{55FE5F8A-CC30-4005-B2C6-EA142993D36E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,17 +44,5 @@ Global
 		{62183A33-85EE-42BB-805A-066E10D9F7A4}.Release|x64.Build.0 = Release|Any CPU
 		{62183A33-85EE-42BB-805A-066E10D9F7A4}.Release|x86.ActiveCfg = Release|Any CPU
 		{62183A33-85EE-42BB-805A-066E10D9F7A4}.Release|x86.Build.0 = Release|Any CPU
-		{55FE5F8A-CC30-4005-B2C6-EA142993D36E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{55FE5F8A-CC30-4005-B2C6-EA142993D36E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{55FE5F8A-CC30-4005-B2C6-EA142993D36E}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{55FE5F8A-CC30-4005-B2C6-EA142993D36E}.Debug|x64.Build.0 = Debug|Any CPU
-		{55FE5F8A-CC30-4005-B2C6-EA142993D36E}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{55FE5F8A-CC30-4005-B2C6-EA142993D36E}.Debug|x86.Build.0 = Debug|Any CPU
-		{55FE5F8A-CC30-4005-B2C6-EA142993D36E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{55FE5F8A-CC30-4005-B2C6-EA142993D36E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{55FE5F8A-CC30-4005-B2C6-EA142993D36E}.Release|x64.ActiveCfg = Release|Any CPU
-		{55FE5F8A-CC30-4005-B2C6-EA142993D36E}.Release|x64.Build.0 = Release|Any CPU
-		{55FE5F8A-CC30-4005-B2C6-EA142993D36E}.Release|x86.ActiveCfg = Release|Any CPU
-		{55FE5F8A-CC30-4005-B2C6-EA142993D36E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
