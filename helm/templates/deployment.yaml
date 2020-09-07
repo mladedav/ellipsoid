@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ellipsoid-dpl
+  labels:
+    app: ellipsoid
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ellipsoid
+  template:
+    metadata:
+      labels:
+        app: ellipsoid
+    spec:
+      containers:
+      - name: default
+        image: mladedav/ellipsoid:{{ .Values.dockerTag }}
+        ports:
+        - containerPort: 5000
