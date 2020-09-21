@@ -3,9 +3,13 @@ kind: Ingress
 metadata:
   name: ellipsoid-ing
   annotations:
-    # kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/issuer: letsencrypt-issuer
 spec:
+  tls:
+  - hosts:
+    - ellipsoid.mladedav.ml
+    secretName: ellipsoid-tls
   rules:
   # This is here for backwards compatibility
   # I sent the IP address to prof. Černý and it's easier to support it for now than to send other messages
